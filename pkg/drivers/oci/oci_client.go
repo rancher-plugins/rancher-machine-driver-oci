@@ -262,11 +262,6 @@ func createCloudInitScript() []byte {
 		"sudo systemctl stop firewalld.service",
 		"sudo systemctl disable firewalld.service",
 		"",
-		"echo \"Installing Docker...\"",
-		"curl https://releases.rancher.com/install-docker/18.09.9.sh | sh",
-		"sudo usermod -aG docker opc",
-		"sudo systemctl enable docker",
-		"",
 		"# Elasticsearch requirement",
 		"sudo sysctl -w vm.max_map_count=262144",
 	}
