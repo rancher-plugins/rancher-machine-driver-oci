@@ -59,6 +59,7 @@ type Driver struct {
 	SubnetID             string
 	TenancyID            string
 	UserID               string
+	UsePrivateIP         bool
 	VCNCompartmentID     string
 	VCNID                string
 	// Runtime values
@@ -152,6 +153,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Specify OCID of the compartment in which to create node(s)",
 			EnvVar: "OCI_NODE_COMPARTMENT_ID",
 		},
+		mcnflag.BoolFlag{
+			Name:   "oci-node-use-private-ip",
+			Usage:  "Use private IP address of the node to connect and for communication",
+			EnvVar: "OCI_NODE_USE_PRIVATE_IP",
+		},
 		mcnflag.StringFlag{
 			Name:   "oci-private-key-contents",
 			Usage:  "Specify private API key contents for the specified OCI user, in PEM format",
@@ -218,11 +224,19 @@ func (d *Driver) GetIP() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		ip, err := oci.GetInstanceIP(d.InstanceID, d.NodeCompartmentID)
-		if err != nil {
-			return "", err
+		if d.UsePrivateIP {
+			ip, err := oci.GetPrivateIP(d.InstanceID, d.NodeCompartmentID)
+			if err != nil {
+				return "", err
+			}
+			d.IPAddress = ip
+		} else {
+			ip, err := oci.GetIPAddress(d.InstanceID, d.NodeCompartmentID)
+			if err != nil {
+				return "", err
+			}
+			d.IPAddress = ip
 		}
-		d.IPAddress = ip
 	}
 
 	return d.IPAddress, nil
@@ -410,6 +424,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 		}
 	}
 
+	d.UsePrivateIP = flags.Bool("oci-node-use-private-ip")
 	d.Image = flags.String("oci-node-image")
 	if !strings.Contains(d.Image, "Oracle-Linux") {
 		log.Warnf("node image %s is not supported. Driver currently supports Oracle Linux images", d.Image)

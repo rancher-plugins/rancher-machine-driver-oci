@@ -221,8 +221,8 @@ func (c *Client) RestartInstance(id string) error {
 	return c.StartInstance(id)
 }
 
-// GetInstanceIP returns the public IP (or private IP if that is what it has).
-func (c *Client) GetInstanceIP(id, compartmentID string) (string, error) {
+// GetIPAddress returns the public IP of the compute instance, or private IP if there is no public address.
+func (c *Client) GetIPAddress(id, compartmentID string) (string, error) {
 	vnics, err := c.computeClient.ListVnicAttachments(context.Background(), core.ListVnicAttachmentsRequest{
 		InstanceId:    &id,
 		CompartmentId: &compartmentID,
@@ -245,6 +245,28 @@ func (c *Client) GetInstanceIP(id, compartmentID string) (string, error) {
 	}
 
 	return *vnic.PublicIp, nil
+}
+
+// GetPrivateIP returns the private IP.
+func (c *Client) GetPrivateIP(id, compartmentID string) (string, error) {
+	vnics, err := c.computeClient.ListVnicAttachments(context.Background(), core.ListVnicAttachmentsRequest{
+		InstanceId:    &id,
+		CompartmentId: &compartmentID,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if len(vnics.Items) == 0 {
+		return "", errors.New("instance does not have any configured VNICs")
+	}
+
+	vnic, err := c.virtualNetworkClient.GetVnic(context.Background(), core.GetVnicRequest{VnicId: vnics.Items[0].VnicId})
+	if err != nil {
+		return "", err
+	}
+
+	return *vnic.PrivateIp, nil
 }
 
 // Create the cloud init script
