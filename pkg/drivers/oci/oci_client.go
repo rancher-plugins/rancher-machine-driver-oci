@@ -300,9 +300,20 @@ func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error
 	// Get list of images
 	log.Debugf("Resolving image ID from %s", nodeImageName)
 	request := core.ListImagesRequest{
-		CompartmentId:   &compartmentID,
-		SortBy:          core.ListImagesSortByTimecreated,
-		RequestMetadata: helpers.GetRequestMetadataWithDefaultRetryPolicy(),
+		CompartmentId: &compartmentID,
+		SortBy:        core.ListImagesSortByTimecreated,
+		RequestMetadata: common.RequestMetadata{
+			RetryPolicy: &common.RetryPolicy{
+				MaximumNumberAttempts: 3,
+				ShouldRetryOperation: func(r common.OCIOperationResponse) bool {
+					return !(r.Error == nil && r.Response.HTTPResponse().StatusCode/100 == 2)
+				},
+
+				NextDuration: func(response common.OCIOperationResponse) time.Duration {
+					return 3 * time.Second
+				},
+			},
+		},
 	}
 	r, err := c.computeClient.ListImages(context.Background(), request)
 	if err != nil {
