@@ -51,6 +51,7 @@ type Driver struct {
 	Fingerprint          string
 	Image                string
 	NodeCompartmentID    string
+	PrivateIPAddress     string
 	PrivateKeyContents   string
 	PrivateKeyPassphrase string
 	PrivateKeyPath       string
@@ -219,24 +220,24 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 func (d *Driver) GetIP() (string, error) {
 	log.Debug("oci.GetIP()")
 
-	if d.IPAddress == "" {
+	if d.IPAddress == "" || d.PrivateIPAddress == "" {
 		oci, err := d.initOCIClient()
 		if err != nil {
 			return "", err
 		}
-		if d.UsePrivateIP {
-			ip, err := oci.GetPrivateIP(d.InstanceID, d.NodeCompartmentID)
-			if err != nil {
-				return "", err
-			}
-			d.IPAddress = ip
-		} else {
-			ip, err := oci.GetIPAddress(d.InstanceID, d.NodeCompartmentID)
-			if err != nil {
-				return "", err
-			}
-			d.IPAddress = ip
+		ip, err := oci.GetIPAddress(d.InstanceID, d.NodeCompartmentID)
+		if err != nil {
+			return "", err
 		}
+		privateIP, err := oci.GetPrivateIP(d.InstanceID, d.NodeCompartmentID)
+		if err != nil {
+			return "", err
+		}
+		d.IPAddress = ip
+		d.PrivateIPAddress = privateIP
+	}
+	if d.UsePrivateIP {
+		return d.PrivateIPAddress, nil
 	}
 
 	return d.IPAddress, nil
@@ -347,12 +348,14 @@ func (d *Driver) PreCreateCheck() error {
 // Remove a host
 func (d *Driver) Remove() error {
 	log.Debug("oci.Remove()")
+	log.Info("NOTICE: Please check Oracle Cloud Console or CLI to ensure there are no leftover resources.")
 
 	oci, err := d.initOCIClient()
 	if err != nil {
 		return err
 	}
 
+	log.Infof("terminating instance ID %s", d.InstanceID)
 	return oci.TerminateInstance(d.InstanceID)
 }
 

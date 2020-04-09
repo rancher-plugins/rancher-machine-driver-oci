@@ -109,6 +109,8 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 		},
 	}
 
+	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript()))
+
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
 		return "", err
@@ -324,7 +326,7 @@ func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error
 	for _, image := range r.Items {
 		if strings.HasPrefix(*image.DisplayName, nodeImageName) {
 			if !strings.Contains(*image.DisplayName, "GPU") {
-				log.Debugf("Using node image %s", *image.DisplayName)
+				log.Infof("Provisioning node using image %s", *image.DisplayName)
 				return image.Id, nil
 			}
 		}
