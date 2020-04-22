@@ -35,3 +35,14 @@ In addition to the above ports, [RKE](https://github.com/rancher/rke) has additi
 
 You can access the cluster after its state is updated to Active.
 
+## Develop and Test
+
+See [development](docs/development.md) for details.
+
+## License
+
+Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+
+`rancher-machine-driver-oci` is licensed under the Apache License 2.0.
+
+See [LICENSE](LICENSE) for more details.
