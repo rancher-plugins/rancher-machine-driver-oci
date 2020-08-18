@@ -38,7 +38,7 @@ const (
 	defaultNodeNamePfx = "oci-node-driver-"
 	defaultSSHPort     = 22
 	defaultSSHUser     = "opc"
-	defaultImage       = "Oracle-Linux-7.7"
+	defaultImage       = "Oracle-Linux-7.8"
 	defaultDockerPort  = 2376
 	sshBitLen          = 4096
 )
@@ -324,20 +324,20 @@ func (d *Driver) Kill() error {
 func (d *Driver) PreCreateCheck() error {
 	log.Debug("oci.PreCreateCheck()")
 
-	// Check that the Oracle Linux node image exists, which will also validate the credentials.
-	log.Infof("Verifying node image availability... ")
+	// Check the number of availability domain, which will also validate the credentials.
+	log.Infof("Verifying number of availability domains... ")
 
 	oci, err := d.initOCIClient()
 	if err != nil {
 		return err
 	}
 
-	image, err := oci.getImageID(d.NodeCompartmentID, defaultImage)
+	ads, err := oci.getNumAvailabilityDomains(d.NodeCompartmentID)
 	if err != nil {
 		return err
 	}
-	if len(*image) == 0 {
-		return fmt.Errorf("could not retrieve node image ID from OCI")
+	if ads <= 0 {
+		return fmt.Errorf("could not retrieve availability domain info from OCI")
 	}
 
 	// TODO, verify VCN and subnet
