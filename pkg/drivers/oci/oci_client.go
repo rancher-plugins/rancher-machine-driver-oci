@@ -334,3 +334,15 @@ func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error
 
 	return nil, fmt.Errorf("could not retrieve image id for an image named %s", nodeImageName)
 }
+
+// getNumAvailabilityDomains gets the number of availability domains in the current region
+func (c *Client) getNumAvailabilityDomains(compartmentID string) (int, error) {
+
+	req := identity.ListAvailabilityDomainsRequest{}
+	req.CompartmentId = &compartmentID
+	ads, err := c.identityClient.ListAvailabilityDomains(context.Background(), req)
+	if err != nil {
+		return -1, err
+	}
+	return len(ads.Items), nil
+}
