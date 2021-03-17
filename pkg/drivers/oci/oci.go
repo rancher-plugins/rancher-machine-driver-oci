@@ -38,7 +38,7 @@ const (
 	defaultNodeNamePfx = "oci-node-driver-"
 	defaultSSHPort     = 22
 	defaultSSHUser     = "opc"
-	defaultImage       = "Oracle-Linux-7.8"
+	defaultImage       = "Oracle-Linux-7.9"
 	defaultDockerPort  = 2376
 	sshBitLen          = 4096
 )
