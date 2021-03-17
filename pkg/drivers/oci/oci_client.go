@@ -279,8 +279,6 @@ func createCloudInitScript() []byte {
 		"sudo /usr/sbin/ethtool --offload $(/usr/sbin/ip -o -4 route show to default | awk '{print $5}') tx off",
 		"sudo iptables -F",
 		"",
-		"# Update to sellinux that fixes write permission error",
-		"sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.99-1.el7_6.noarch.rpm",
 		"#sudo sed -i  s/SELINUX=enforcing/SELINUX=permissive/ /etc/selinux/config",
 		"sudo setenforce 0",
 		"sudo systemctl stop firewalld.service",
