@@ -278,7 +278,6 @@ func createCloudInitScript() []byte {
 		"#echo \"Disabling OS firewall...\"",
 		"sudo /usr/sbin/ethtool --offload $(/usr/sbin/ip -o -4 route show to default | awk '{print $5}') tx off",
 		"sudo iptables -F",
-		"",
 		"#sudo sed -i  s/SELINUX=enforcing/SELINUX=permissive/ /etc/selinux/config",
 		"sudo setenforce 0",
 		"sudo systemctl stop firewalld.service",
@@ -286,6 +285,9 @@ func createCloudInitScript() []byte {
 		"",
 		"# Elasticsearch requirement",
 		"sudo sysctl -w vm.max_map_count=262144",
+		"# Docker requirement",
+		"sudo groupadd docker",
+		"sudo usermod -aG docker " + defaultSSHUser,
 	}
 	return []byte(strings.Join(cloudInit, "\n"))
 }
