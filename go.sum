@@ -10,6 +10,7 @@ github.com/bugsnag/panicwrap v0.0.0-20160118154447-aceac81c6e2f/go.mod h1:D/8v3k
 github.com/cenkalti/backoff v0.0.0-20141124221459-9831e1e25c87/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/davecgh/go-spew v0.0.0-20151105211317-5215b55f46b2 h1:5zdDAMuB3gvbHB1m2BZT9+t9w+xaBmK3ehb7skDXcwM=
 github.com/davecgh/go-spew v0.0.0-20151105211317-5215b55f46b2/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-xdr v0.0.0-20161123171359-e6a2ba005892/go.mod h1:CTDl0pzVzE5DEzZhPfvhY/9sPFMQIxaJ9VAMs9AagrE=
 github.com/dgrijalva/jwt-go v0.0.0-20160831183534-24c63f56522a/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/digitalocean/godo v0.0.0-20170317202744-d59ed2fe842b/go.mod h1:h6faOIcZ8lWIwNQ+DN7b3CgX4Kwby5T+nbpNqkUIozU=
@@ -41,6 +42,10 @@ github.com/onsi/ginkgo v1.9.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+W
 github.com/onsi/gomega v1.6.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/oracle/oci-go-sdk v13.0.0+incompatible h1:ueAty9OrRXfWi+4gyPLKcOpzhf1OSK70mwt36sD/hf8=
 github.com/oracle/oci-go-sdk v13.0.0+incompatible/go.mod h1:VQb79nF8Z2cwLkLS35ukwStZIg5F66tcBccjip/j888=
+github.com/oracle/oci-go-sdk/v38 v38.0.0 h1:KsMs31nJveYAF8xoG232ZsyeENxl3KjP4rnkezE9UrU=
+github.com/oracle/oci-go-sdk/v38 v38.0.0/go.mod h1:IHq3NEgVwmhtTLntyD7wfW9sISbwKnqTztPwePD2o+4=
+github.com/oracle/oci-go-sdk/v44 v44.0.0 h1:f7tw0zL8BWMml6mksficidk+oIxQaowZ6iod+XKaC98=
+github.com/oracle/oci-go-sdk/v44 v44.0.0/go.mod h1:urFC4kXjjPmymJrKGDRPVYjGA/I2ZHlKWJMXXciNANk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rackspace/gophercloud v0.0.0-20150408191457-ce0f487f6747/go.mod h1:4bJ1FwuaBZ6dt1VcDX5/O662mwR8GWqS4l68H6hkoYQ=
@@ -51,8 +56,10 @@ github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdh
 github.com/sirupsen/logrus v1.0.4/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/skarademir/naturalsort v0.0.0-20150715044055-69a5d87bef62/go.mod h1:oIdVclZaltY1Nf7OQUkg1/2jImBJ+ZfKZuDIRSwk3p0=
 github.com/stretchr/objx v0.0.0-20150928122152-1a9d0bb9f541/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v0.0.0-20160221104443-1f4a1643a57e h1:Gb5eqHrEbqeUrSCRlOWS42m2qUJ5HcndLYZcextGGow=
 github.com/stretchr/testify v0.0.0-20160221104443-1f4a1643a57e/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/tent/http-link-go v0.0.0-20130702225549-ac974c61c2f9/go.mod h1:RHkNRtSLfOK7qBTHaeSX1D6BNpI3qw7NTxsmNr4RvN8=
 github.com/urfave/cli v1.11.1-0.20151120215642-0302d3914d2a/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/vmware/govcloudair v0.0.2/go.mod h1:Vxktpba+eP4dX5YzYP869DRPSm5ChQ2A/GUrmKSLvlo=
@@ -91,4 +98,5 @@ gopkg.in/resty.v1 v1.9.1/go.mod h1:vo52Hzryw9PnPHcJfPsBiFW62XhNx5OczbV9y+IMpgc=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 launchpad.net/gocheck v0.0.0-20140225173054-000000000087/go.mod h1:hj7XX3B/0A+80Vse0e+BUHsHMTEhd0O4cpUHr/e/BUM=

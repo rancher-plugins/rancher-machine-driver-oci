@@ -21,8 +21,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/core"
+	"github.com/oracle/oci-go-sdk/v44/common"
+	"github.com/oracle/oci-go-sdk/v44/core"
 	"github.com/rancher/machine/libmachine/drivers"
 	"github.com/rancher/machine/libmachine/log"
 	"github.com/rancher/machine/libmachine/mcnflag"
@@ -51,6 +51,8 @@ type Driver struct {
 	Fingerprint          string
 	Image                string
 	NodeCompartmentID    string
+	OCPUs                int
+	MemoryInGBs          int
 	PrivateIPAddress     string
 	PrivateKeyContents   string
 	PrivateKeyPassphrase string
@@ -111,7 +113,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(defaultNodeNamePfx+d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes))
+	d.InstanceID, err = oci.CreateInstance(defaultNodeNamePfx+d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
@@ -184,6 +186,16 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "oci-node-shape",
 			Usage:  "Specify instance shape of the node(s)",
 			EnvVar: "OCI_NODE_SHAPE",
+		},
+		mcnflag.IntFlag{
+			Name:   "oci-node-ocpus",
+			Usage:  "Specify number of OCPUs for a flexible node shape",
+			EnvVar: "OCI_NODE_OCPUS",
+		},
+		mcnflag.IntFlag{
+			Name:   "oci-node-memory-in-gb",
+			Usage:  "Specify the amount of memory in GB for a flexible node shape",
+			EnvVar: "OCI_NODE_MEMORY_GB",
 		},
 		mcnflag.StringFlag{
 			Name:   "oci-subnet-id",
@@ -411,6 +423,20 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	if d.Shape == "" {
 		return errors.New("no OCI node shape specified (--oci-node-shape)")
 	}
+	if strings.Contains(strings.ToLower(d.Shape), "flex") {
+		d.OCPUs = flags.Int("oci-node-ocpus")
+		if d.OCPUs <= 0 {
+			return errors.New("both the number of OCPUs and memory (in GBs) must be specified for a flexible node shape with --oci-node-ocpus and --oci-node-memory-in-gb")
+		} else if d.OCPUs > 64 {
+			return errors.New("number of OCPUs must not be larger than 64")
+		}
+
+		d.MemoryInGBs = flags.Int("oci-node-memory-in-gb")
+		if d.MemoryInGBs <= 0 {
+			return errors.New("both the number of OCPUs and memory (in GBs) must be specified for a flexible node shape with --oci-node-ocpus and --oci-node-memory-in-gb")
+		}
+	}
+
 	d.Fingerprint = flags.String("oci-fingerprint")
 	if d.Fingerprint == "" {
 		return errors.New("no OCI oci-fingerprint specified (--oci-fingerprint)")

@@ -19,14 +19,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/example/helpers"
+	"github.com/oracle/oci-go-sdk/v44/example/helpers"
 	"github.com/rancher/machine/libmachine/log"
 	"strings"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/common"
-	"github.com/oracle/oci-go-sdk/core"
-	"github.com/oracle/oci-go-sdk/identity"
+	"github.com/oracle/oci-go-sdk/v44/common"
+	"github.com/oracle/oci-go-sdk/v44/core"
+	"github.com/oracle/oci-go-sdk/v44/identity"
 )
 
 // Client defines / contains the OCI/Identity clients and operations.
@@ -67,7 +67,7 @@ func newClient(configuration common.ConfigurationProvider) (*Client, error) {
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, authorizedKeys string) (string, error) {
+func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 
 	req := identity.ListAvailabilityDomainsRequest{}
 	req.CompartmentId = &compartmentID
@@ -107,6 +107,17 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 				ImageId: imageID,
 			},
 		},
+	}
+
+	if nodeOCPUs > 0 {
+		oCPUs := float32(nodeOCPUs)
+		memoryInGBs := float32(nodeMemoryInGBs)
+
+		LaunchInstanceShapeConfigDetails := core.LaunchInstanceShapeConfigDetails{
+			Ocpus:       &oCPUs,
+			MemoryInGBs: &memoryInGBs,
+		}
+		request.ShapeConfig = &LaunchInstanceShapeConfigDetails
 	}
 
 	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript()))
