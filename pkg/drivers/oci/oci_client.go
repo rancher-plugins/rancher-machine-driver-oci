@@ -19,14 +19,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v44/example/helpers"
+	"github.com/oracle/oci-go-sdk/v65/example/helpers"
 	"github.com/rancher/machine/libmachine/log"
 	"strings"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v44/common"
-	"github.com/oracle/oci-go-sdk/v44/core"
-	"github.com/oracle/oci-go-sdk/v44/identity"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/core"
+	"github.com/oracle/oci-go-sdk/v65/identity"
 )
 
 // Client defines / contains the OCI/Identity clients and operations.
