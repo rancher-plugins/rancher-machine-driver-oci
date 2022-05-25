@@ -19,14 +19,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v44/example/helpers"
+	"github.com/oracle/oci-go-sdk/v65/example/helpers"
 	"github.com/rancher/machine/libmachine/log"
 	"strings"
 	"time"
 
-	"github.com/oracle/oci-go-sdk/v44/common"
-	"github.com/oracle/oci-go-sdk/v44/core"
-	"github.com/oracle/oci-go-sdk/v44/identity"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/core"
+	"github.com/oracle/oci-go-sdk/v65/identity"
 )
 
 // Client defines / contains the OCI/Identity clients and operations.
@@ -336,7 +336,8 @@ func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error
 	// Loop through the items to find an image to use.  The list is sorted by time created in descending order
 	for _, image := range r.Items {
 		if strings.HasPrefix(*image.DisplayName, nodeImageName) {
-			if !strings.Contains(*image.DisplayName, "GPU") {
+			// For now, just filter out GPU and ARM images out
+			if !strings.Contains(*image.DisplayName, "GPU") && !strings.Contains(*image.DisplayName, "aarch") {
 				log.Infof("Provisioning node using image %s", *image.DisplayName)
 				return image.Id, nil
 			}

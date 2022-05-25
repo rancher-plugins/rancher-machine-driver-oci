@@ -21,12 +21,12 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/oracle/oci-go-sdk/v44/common"
-	"github.com/oracle/oci-go-sdk/v44/core"
-	"github.com/rancher/machine/libmachine/drivers"
-	"github.com/rancher/machine/libmachine/log"
-	"github.com/rancher/machine/libmachine/mcnflag"
-	"github.com/rancher/machine/libmachine/state"
+	"github.com/docker/machine/libmachine/drivers"
+	"github.com/docker/machine/libmachine/log"
+	"github.com/docker/machine/libmachine/mcnflag"
+	"github.com/docker/machine/libmachine/state"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/core"
 	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"os"
@@ -35,12 +35,11 @@ import (
 )
 
 const (
-	defaultNodeNamePfx = "oci-node-driver-"
-	defaultSSHPort     = 22
-	defaultSSHUser     = "opc"
-	defaultImage       = "Oracle-Linux-7.9"
-	defaultDockerPort  = 2376
-	sshBitLen          = 4096
+	defaultSSHPort    = 22
+	defaultSSHUser    = "opc"
+	defaultImage      = "Oracle-Linux-7.9"
+	defaultDockerPort = 2376
+	sshBitLen         = 4096
 )
 
 // Driver is the implementation of BaseDriver interface
@@ -113,7 +112,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(defaultNodeNamePfx+d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
