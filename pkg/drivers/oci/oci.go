@@ -35,12 +35,11 @@ import (
 )
 
 const (
-	defaultNodeNamePfx = "oci-node-driver-"
-	defaultSSHPort     = 22
-	defaultSSHUser     = "opc"
-	defaultImage       = "Oracle-Linux-7.9"
-	defaultDockerPort  = 2376
-	sshBitLen          = 4096
+	defaultSSHPort    = 22
+	defaultSSHUser    = "opc"
+	defaultImage      = "Oracle-Linux-7.9"
+	defaultDockerPort = 2376
+	sshBitLen         = 4096
 )
 
 // Driver is the implementation of BaseDriver interface
@@ -113,7 +112,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(defaultNodeNamePfx+d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
