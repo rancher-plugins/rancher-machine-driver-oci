@@ -37,7 +37,6 @@ import (
 const (
 	defaultSSHPort    = 22
 	defaultSSHUser    = "opc"
-	defaultImage      = "Oracle-Linux-7.9"
 	defaultDockerPort = 2376
 	sshBitLen         = 4096
 )
@@ -112,7 +111,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
@@ -146,8 +145,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		},
 		mcnflag.StringFlag{
 			Name:   "oci-node-image",
-			Usage:  "Specify Oracle-Linux image the node(s) should use",
-			Value:  defaultImage,
+			Usage:  "Specify platform image the node(s) should use",
 			EnvVar: "OCI_NODE_IMAGE",
 		},
 		mcnflag.StringFlag{
@@ -183,18 +181,30 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		},
 		mcnflag.StringFlag{
 			Name:   "oci-node-shape",
-			Usage:  "Specify instance shape of the node(s)",
+			Usage:  "Specify compute shape of the node(s)",
 			EnvVar: "OCI_NODE_SHAPE",
 		},
 		mcnflag.IntFlag{
 			Name:   "oci-node-ocpus",
-			Usage:  "Specify number of OCPUs for a flexible node shape",
+			Usage:  "Specify number of OCPUs if using a flexible compute shape",
 			EnvVar: "OCI_NODE_OCPUS",
 		},
 		mcnflag.IntFlag{
 			Name:   "oci-node-memory-in-gb",
-			Usage:  "Specify the amount of memory in GB for a flexible node shape",
+			Usage:  "Specify the amount of memory in GB if using a flexible compute shape",
 			EnvVar: "OCI_NODE_MEMORY_GB",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-node-ssh-user",
+			Usage:  "Specify the SSH user for the specified platform image. Set to opc by default",
+			EnvVar: "OCI_NODE_SSH_USER",
+			Value:  defaultSSHUser,
+		},
+		mcnflag.IntFlag{
+			Name:   "oci-node-ssh-port",
+			Usage:  "Specify the SSH port for the newly created node. Set to 22 by default",
+			EnvVar: "OCI_NODE_SSH_PORT",
+			Value:  defaultSSHPort,
 		},
 		mcnflag.StringFlag{
 			Name:   "oci-subnet-id",
@@ -270,14 +280,20 @@ func (d *Driver) GetSSHHostname() (string, error) {
 func (d *Driver) GetSSHPort() (int, error) {
 	log.Debug("oci.GetSSHPort()")
 
-	return defaultSSHPort, nil
+	if d.SSHPort <= 0 {
+		return defaultSSHPort, nil
+	}
+	return d.SSHPort, nil
 }
 
 // GetSSHUsername returns username for use with ssh
 func (d *Driver) GetSSHUsername() string {
 	log.Debug("oci.GetSSHUsername()")
 
-	return defaultSSHUser
+	if d.SSHUser == "" {
+		return defaultSSHUser
+	}
+	return d.SSHUser
 }
 
 // GetURL returns a Docker compatible host URL for connecting to this host
@@ -404,7 +420,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	}
 	d.VCNCompartmentID = flags.String("oci-vcn-compartment-id")
 	if d.VCNCompartmentID == "" {
-		return errors.New("no OCI compartment specified for VCN (--oci-vcn-compartment-id)")
+		d.VCNCompartmentID = d.NodeCompartmentID
 	}
 	d.UserID = flags.String("oci-user-id")
 	if d.UserID == "" {
@@ -435,6 +451,15 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 			return errors.New("both the number of OCPUs and memory (in GBs) must be specified for a flexible node shape with --oci-node-ocpus and --oci-node-memory-in-gb")
 		}
 	}
+	d.Image = flags.String("oci-node-image")
+	if d.Image == "" {
+		return errors.New("no OCI node image specified (--oci-node-image)")
+	}
+	d.SSHUser = flags.String("oci-node-ssh-user")
+	d.SSHPort = flags.Int("oci-node-ssh-port")
+	if d.SSHPort <= 0 {
+		d.SSHPort = defaultSSHPort
+	}
 
 	d.Fingerprint = flags.String("oci-fingerprint")
 	if d.Fingerprint == "" {
@@ -453,13 +478,6 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	}
 
 	d.UsePrivateIP = flags.Bool("oci-node-use-private-ip")
-	d.Image = flags.String("oci-node-image")
-	if !strings.Contains(d.Image, "Oracle-Linux") {
-		log.Warnf("node image %s is not supported. Driver currently supports Oracle Linux images", d.Image)
-		d.Image = defaultImage
-	}
-	d.SSHUser = defaultSSHUser
-	d.SSHPort = defaultSSHPort
 
 	return nil
 }

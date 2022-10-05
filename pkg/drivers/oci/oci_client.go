@@ -67,7 +67,7 @@ func newClient(configuration common.ConfigurationProvider) (*Client, error) {
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 
 	req := identity.ListAvailabilityDomainsRequest{}
 	req.CompartmentId = &compartmentID
@@ -89,6 +89,7 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 	if err != nil {
 		return "", err
 	}
+
 	// Create the launch compute instance request
 	request := core.LaunchInstanceRequest{
 		LaunchInstanceDetails: core.LaunchInstanceDetails{
@@ -101,7 +102,7 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript()),
+				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId: imageID,
@@ -120,7 +121,7 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 		request.ShapeConfig = &LaunchInstanceShapeConfigDetails
 	}
 
-	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript()))
+	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript(sshUser)))
 
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
@@ -282,28 +283,26 @@ func (c *Client) GetPrivateIP(id, compartmentID string) (string, error) {
 	return *vnic.PrivateIp, nil
 }
 
-// Create the cloud init script
-func createCloudInitScript() []byte {
+// Create the (Oracle Linux specific) cloud init script
+func createCloudInitScript(sshUser string) []byte {
 	cloudInit := []string{
 		"#!/bin/sh",
 		"#echo \"Disabling OS firewall...\"",
-		"sudo /usr/sbin/ethtool --offload $(/usr/sbin/ip -o -4 route show to default | awk '{print $5}') tx off",
-		"sudo iptables -F",
-		"#sudo sed -i  s/SELINUX=enforcing/SELINUX=permissive/ /etc/selinux/config",
-		"sudo setenforce 0",
-		"sudo systemctl stop firewalld.service",
-		"sudo systemctl disable firewalld.service",
-		"",
+		"sudo /usr/sbin/ethtool --offload $(/usr/sbin/ip -o -4 route show to default | awk '{print $5}') tx off  | true",
+		"sudo iptables -F | true",
+		"sudo setenforce 0 | true",
+		"sudo systemctl stop firewalld.service | true",
+		"sudo systemctl disable firewalld.service | true",
 		"# Elasticsearch requirement",
-		"sudo sysctl -w vm.max_map_count=262144",
+		"sudo sysctl -w vm.max_map_count=262144 | true",
 		"# Docker requirement",
-		"sudo groupadd docker",
-		"sudo usermod -aG docker " + defaultSSHUser,
+		"sudo groupadd docker | true",
+		"sudo usermod -aG docker " + sshUser + " | true",
 	}
 	return []byte(strings.Join(cloudInit, "\n"))
 }
 
-// getImageID gets the most recent ImageId for the node image name
+// getImageID gets the ImageId for the image name
 func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error) {
 
 	if nodeImageName == "" || compartmentID == "" {
@@ -312,35 +311,43 @@ func (c *Client) getImageID(compartmentID, nodeImageName string) (*string, error
 
 	// Get list of images
 	log.Debugf("Resolving image ID from %s", nodeImageName)
-	request := core.ListImagesRequest{
-		CompartmentId: &compartmentID,
-		SortBy:        core.ListImagesSortByTimecreated,
-		RequestMetadata: common.RequestMetadata{
-			RetryPolicy: &common.RetryPolicy{
-				MaximumNumberAttempts: 3,
-				ShouldRetryOperation: func(r common.OCIOperationResponse) bool {
-					return !(r.Error == nil && r.Response.HTTPResponse().StatusCode/100 == 2)
-				},
+	var page *string
+	for {
+		request := core.ListImagesRequest{
+			CompartmentId:  &compartmentID,
+			SortBy:         core.ListImagesSortByTimecreated,
+			SortOrder:      core.ListImagesSortOrderDesc,
+			LifecycleState: core.ImageLifecycleStateAvailable,
+			RequestMetadata: common.RequestMetadata{
+				RetryPolicy: &common.RetryPolicy{
+					MaximumNumberAttempts: 3,
+					ShouldRetryOperation: func(r common.OCIOperationResponse) bool {
+						return !(r.Error == nil && r.Response.HTTPResponse().StatusCode/100 == 2)
+					},
 
-				NextDuration: func(response common.OCIOperationResponse) time.Duration {
-					return 3 * time.Second
+					NextDuration: func(response common.OCIOperationResponse) time.Duration {
+						return 3 * time.Second
+					},
 				},
 			},
-		},
-	}
-	r, err := c.computeClient.ListImages(context.Background(), request)
-	if err != nil {
-		return nil, err
-	}
+			Page: page,
+		}
 
-	// Loop through the items to find an image to use.  The list is sorted by time created in descending order
-	for _, image := range r.Items {
-		if strings.HasPrefix(*image.DisplayName, nodeImageName) {
-			// For now, just filter out GPU and ARM images out
-			if !strings.Contains(*image.DisplayName, "GPU") && !strings.Contains(*image.DisplayName, "aarch") {
+		r, err := c.computeClient.ListImages(context.Background(), request)
+		if err != nil {
+			return nil, err
+		}
+
+		// Loop through the items to find an image to use.  The list is sorted by time created in descending order
+		for _, image := range r.Items {
+			if strings.EqualFold(*image.DisplayName, nodeImageName) {
 				log.Infof("Provisioning node using image %s", *image.DisplayName)
 				return image.Id, nil
 			}
+		}
+
+		if page = r.OpcNextPage; r.OpcNextPage == nil {
+			break
 		}
 	}
 
