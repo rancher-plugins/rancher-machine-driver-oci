@@ -67,7 +67,7 @@ func newClient(configuration common.ConfigurationProvider) (*Client, error) {
 }
 
 // CreateInstance creates a new compute instance.
-func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
+func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, nodeShape, nodeImageName, nodeSubnetID, sshUser, nodeUserDataContents, authorizedKeys string, nodeOCPUs, nodeMemoryInGBs int) (string, error) {
 
 	req := identity.ListAvailabilityDomainsRequest{}
 	req.CompartmentId = &compartmentID
@@ -102,12 +102,17 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 			DisplayName: &displayName,
 			Metadata: map[string]string{
 				"ssh_authorized_keys": authorizedKeys,
-				"user_data":           base64.StdEncoding.EncodeToString(createCloudInitScript(sshUser)),
 			},
 			SourceDetails: core.InstanceSourceViaImageDetails{
 				ImageId: imageID,
 			},
 		},
+	}
+
+	if nodeUserDataContents != "" {
+		request.Metadata["user_data"] = nodeUserDataContents
+	} else {
+		request.Metadata["user_data"] = base64.StdEncoding.EncodeToString(defaultCloudInitScript(sshUser))
 	}
 
 	if nodeOCPUs > 0 {
@@ -121,7 +126,7 @@ func (c *Client) CreateInstance(displayName, availabilityDomain, compartmentID, 
 		request.ShapeConfig = &LaunchInstanceShapeConfigDetails
 	}
 
-	log.Debugf("Launching instance with cloud-init: %s", string(createCloudInitScript(sshUser)))
+	log.Debugf("Launching instance with cloud-init: %s", string(defaultCloudInitScript(sshUser)))
 
 	createResp, err := c.computeClient.LaunchInstance(context.Background(), request)
 	if err != nil {
@@ -283,8 +288,8 @@ func (c *Client) GetPrivateIP(id, compartmentID string) (string, error) {
 	return *vnic.PrivateIp, nil
 }
 
-// Create the (Oracle Linux specific) cloud init script
-func createCloudInitScript(sshUser string) []byte {
+// Create a default (Oracle Linux specific) cloud init script if not specified by the user
+func defaultCloudInitScript(sshUser string) []byte {
 	cloudInit := []string{
 		"#!/bin/sh",
 		"#echo \"Disabling OS firewall...\"",
