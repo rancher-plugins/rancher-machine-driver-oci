@@ -37,7 +37,9 @@ go-vet:
 binary-build:
 	mkdir -p ${DIST_DIR}
 	GO111MODULE=on GOOS=linux GOARCH=amd64 go build -o ${DIST_DIR}/${BINARY_NAME}-linux .
+	GO111MODULE=on GOOS=linux GOARCH=arm64 go build -o ${DIST_DIR}/${BINARY_NAME}-linux-arm64 .
 	GO111MODULE=on GOOS=darwin GOARCH=amd64 go build -o ${DIST_DIR}/${BINARY_NAME}-darwin .
+	shasum -a 256 ${DIST_DIR}/*
 
 #
 # Tests-related tasks
