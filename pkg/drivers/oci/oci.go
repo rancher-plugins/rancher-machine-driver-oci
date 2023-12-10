@@ -18,6 +18,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -49,6 +50,7 @@ type Driver struct {
 	Fingerprint          string
 	Image                string
 	NodeCompartmentID    string
+	NodeUserDataContents string
 	OCPUs                int
 	MemoryInGBs          int
 	PrivateIPAddress     string
@@ -111,7 +113,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
+	d.InstanceID, err = oci.CreateInstance(d.MachineName, d.AvailabilityDomain, d.NodeCompartmentID, d.Shape, d.Image, d.SubnetID, d.SSHUser, d.NodeUserDataContents, string(publicKeyBytes), d.OCPUs, d.MemoryInGBs)
 	if err != nil {
 		return err
 	}
@@ -232,6 +234,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "oci-vcn-id",
 			Usage:  "Specify pre-existing VCN id in which you want to create the node(s)",
 			EnvVar: "OCI_VCN_ID",
+		},
+		mcnflag.StringFlag{
+			Name:   "oci-node-user-data-contents",
+			Usage:  "Specify the contents of custom cloud-init / user_data for the nodes - string will be base64 encoded internally if it is not already",
+			EnvVar: "OCI_NODE_USER_DATA_CONTENTS",
 		},
 	}
 }
@@ -460,6 +467,14 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	if d.SSHPort <= 0 {
 		d.SSHPort = defaultSSHPort
 	}
+	d.NodeUserDataContents = flags.String("oci-node-user-data-contents")
+	if d.NodeUserDataContents != "" {
+		userDataBytes := []byte(d.NodeUserDataContents)
+		if !isBase64Encoded(userDataBytes) {
+			// String was not base64 encoded.
+			d.NodeUserDataContents = base64.StdEncoding.EncodeToString(userDataBytes)
+		}
+	}
 
 	d.Fingerprint = flags.String("oci-fingerprint")
 	if d.Fingerprint == "" {
@@ -557,4 +572,9 @@ func encodePEM(privateKey *rsa.PrivateKey) []byte {
 	}
 
 	return pem.EncodeToMemory(&block)
+}
+
+func isBase64Encoded(data []byte) bool {
+	_, err := base64.StdEncoding.DecodeString(string(data))
+	return err == nil
 }
